@@ -26,10 +26,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install nbqa flake8 pylint bandit nbformat
 
-    - name: Check Naming Conventions
+    - name: Lint Notebooks
       run: |
-        # Use pylint with nbqa to check naming conventions
-        nbqa pylint --disable=all --enable=naming-convention .
+        # Lint the Python code in .ipynb files using flake8
+        nbqa flake8 .
 
     - name: Check for Large Output Cells
       run: |
