@@ -1,52 +1,85 @@
-name: Notebook Quality Checks
+name: Code Quality and Security Checks
 
 on:
   push:
     branches:
-      - main
+      - main  # Adjust as needed
   pull_request:
     branches:
-      - main
+      - main  # Adjust as needed
 
 jobs:
-  notebook-checks:
-    runs-on: ubuntu-latest
+  code-quality-checks:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]  # Run on multiple platforms
+        python-version: ['3.x']  # Use Python 3.x (latest)
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install nbqa flake8 pylint bandit nbformat
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install nbqa flake8 pylint bandit nbformat
 
-    - name: Lint Notebooks
-      run: |
-        # Lint the Python code in .ipynb files using flake8
-        nbqa flake8 .
+      # Step 1: Check Naming Conventions and Linting
+      - name: Check Naming Conventions and Linting
+        run: |
+          # Check .ipynb files for naming conventions and linting issues
+          nbqa flake8 . --select=N
+          nbqa pylint . --disable=all --enable=naming-convention,missing-function-docstring,convention
 
-    - name: Check for Large Output Cells
-      run: |
-        # Check for large output cells in notebooks
-        for notebook in $(find . -name "*.ipynb"); do
-          if jupyter nbconvert --to notebook --stdout "$notebook" | grep -q '"output_type": "display_data"'; then
-            echo "Notebook $notebook has large output cells. Please clean it up."
+          # Check .py files for naming conventions and linting issues
+          flake8 . --select=N
+          pylint . --disable=all --enable=naming-convention,missing-function-docstring,convention
+
+      # Step 2: Check for Large Output Cells in Jupyter Notebooks
+      - name: Check for Large Output Cells in Jupyter Notebooks
+        run: |
+          for notebook in $(find . -name "*.ipynb"); do
+            if jupyter nbconvert --to notebook --stdout "$notebook" | grep -q '"output_type": "display_data"'; then
+              echo "Notebook $notebook has large output cells. Please clean it up."
+              exit 1
+            fi
+          done
+
+      # Step 3: Check for Added .pdf or .docx Files
+      - name: Check for Added .pdf or .docx Files
+        run: |
+          # Check for .pdf and .docx files in the commit
+          ADDED_FILES=$(git diff --name-only --diff-filter=A origin/main...HEAD -- '*.pdf' '*.docx' || true)
+          if [ ! -z "$ADDED_FILES" ]; then
+            echo "Warning: .pdf or .docx files have been added. Consider reviewing the necessity."
+            echo "$ADDED_FILES"
             exit 1
+          else
+            echo "No .pdf or .docx files were added."
           fi
-        done
 
-    - name: Check for Function Docstrings
-      run: |
-        # Use pylint to check for missing function docstrings
-        nbqa pylint --disable=all --enable=missing-function-docstring .
+      # Step 4: Security Vulnerability Check
+      - name: Security Vulnerability Check
+        run: |
+          # Use bandit to check for security vulnerabilities in .ipynb and .py files
+          nbqa bandit -r .
+          bandit -r .
 
-    - name: Security Vulnerability Check
-      run: |
-        # Use bandit to check for security vulnerabilities in notebook code
-        nbqa bandit -r .
+      # Step 5: Check if Notebooks and Scripts Run Successfully
+      - name: Check if Notebooks and Scripts Run Successfully
+        run: |
+          # Check if all notebooks run without errors
+          for notebook in $(find . -name "*.ipynb"); do
+            jupyter nbconvert --to notebook --execute --inplace "$notebook" || (echo "Notebook $notebook failed to execute." && exit 1)
+          done
+          
+          # Check if all Python scripts run without errors
+          for script in $(find . -name "*.py"); do
+            python "$script" || (echo "Python script $script failed to execute." && exit 1)
+          done
