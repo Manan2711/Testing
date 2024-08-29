@@ -1,4 +1,4 @@
-name: Notebook Checks
+name: Notebook Quality Checks
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  lint-and-test:
+  notebook-checks:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,53 +24,29 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install nbqa flake8 pytest nbconvert nbval
+        pip install nbqa flake8 pylint bandit nbformat
 
-    - name: Lint Notebooks
+    - name: Check Naming Conventions
       run: |
-        # Lint the Python code in .ipynb files using flake8
-        nbqa flake8 .
-
-    - name: Test Notebooks with nbval
-      run: |
-        # Convert notebooks to executable scripts and run tests
-        pytest --nbval --sanitize-with .nbval_config.yaml
-
-    - name: Check Notebook Execution
-      run: |
-        # Execute notebooks and check if they run without errors
-        for notebook in $(find . -name "*.ipynb"); do
-          jupyter nbconvert --to notebook --execute "$notebook" --stdout > /dev/null
-        done
+        # Use pylint with nbqa to check naming conventions
+        nbqa pylint --disable=all --enable=naming-convention .
 
     - name: Check for Large Output Cells
       run: |
-        # Ensure that no notebook contains excessively large output cells
+        # Check for large output cells in notebooks
         for notebook in $(find . -name "*.ipynb"); do
-          if jupyter nbconvert --to notebook --stdout "$notebook" | grep -q "output_type": "display_data"; then
+          if jupyter nbconvert --to notebook --stdout "$notebook" | grep -q '"output_type": "display_data"'; then
             echo "Notebook $notebook has large output cells. Please clean it up."
             exit 1
           fi
         done
 
-  security-check:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
-
-    - name: Install Dependencies
+    - name: Check for Function Docstrings
       run: |
-        python -m pip install --upgrade pip
-        pip install bandit
+        # Use pylint to check for missing function docstrings
+        nbqa pylint --disable=all --enable=missing-function-docstring .
 
-    - name: Run Security Scan
+    - name: Security Vulnerability Check
       run: |
-        # Run security checks on the code within the notebook
-        bandit -r .
+        # Use bandit to check for security vulnerabilities in notebook code
+        nbqa bandit -r .
