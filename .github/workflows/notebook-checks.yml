@@ -1,0 +1,76 @@
+name: Notebook Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install nbqa flake8 pytest nbconvert nbval
+
+    - name: Lint Notebooks
+      run: |
+        # Lint the Python code in .ipynb files using flake8
+        nbqa flake8 .
+
+    - name: Test Notebooks with nbval
+      run: |
+        # Convert notebooks to executable scripts and run tests
+        pytest --nbval --sanitize-with .nbval_config.yaml
+
+    - name: Check Notebook Execution
+      run: |
+        # Execute notebooks and check if they run without errors
+        for notebook in $(find . -name "*.ipynb"); do
+          jupyter nbconvert --to notebook --execute "$notebook" --stdout > /dev/null
+        done
+
+    - name: Check for Large Output Cells
+      run: |
+        # Ensure that no notebook contains excessively large output cells
+        for notebook in $(find . -name "*.ipynb"); do
+          if jupyter nbconvert --to notebook --stdout "$notebook" | grep -q "output_type": "display_data"; then
+            echo "Notebook $notebook has large output cells. Please clean it up."
+            exit 1
+          fi
+        done
+
+  security-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit
+
+    - name: Run Security Scan
+      run: |
+        # Run security checks on the code within the notebook
+        bandit -r .
