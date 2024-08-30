@@ -45,6 +45,7 @@ jobs:
           py_files=$(echo "${{ steps.get_file_changes.outputs.files}}" | grep ".py$")
           if [ -z "$py_files" ]; then
             echo "No Python files to lint."
+            exit 0
           else
             flake8 $py_files
             pylint $py_files --rcfile=config/pylintrc
@@ -56,6 +57,7 @@ jobs:
           nb_files=$(echo "${{ steps.get_file_changes.outputs.files}}" | grep ".nb$")
           if [ -z "$nb_files" ]; then
             echo "No Jupyter Notebooks to lint."
+            exit 0
           else
             nbqa flake8 $py_files
             nbqa pylint $py_files --rcfile=config/pylintrc
