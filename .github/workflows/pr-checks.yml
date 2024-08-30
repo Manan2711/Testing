@@ -41,7 +41,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install nbqa flake8 pylint bandit nbformat
-      
+
+      - name: Debug - Print changed files
+        run: |
+          cat changed_files.txt
+
       - name: Run pylint on Python files
         run: |
           py_files=$(grep -E '\.py$' changed_files.txt || true)
