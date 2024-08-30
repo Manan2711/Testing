@@ -1,0 +1,63 @@
+name: Code Quality and Security Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Pull Request Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get file changes
+        id: get_file_changes
+        uses: trilom/file-changes-action@v1.2.3
+
+      - name: Report list of changed files
+        run: |
+          echo Changed files: ${{ steps.get_file_changes.outputs.files }}
+
+      - name: Check for docx files
+        run: |
+          echo "${{ steps.get_file_changes.outputs.files }}" | tr " " "\n" | if grep -q -e ".docx" -e ".pdf"; then
+            echo "This PR contains PDF or Docx files, please remove them and try again."
+            exit 1
+          else
+            echo "PR does not contain PDF or Docx files."
+          fi
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install nbqa flake8 pylint bandit nbformat
+      
+      - name: Run pylint on Python files
+        run: |
+          py_files=$(echo "${{ steps.get_file_changes.outputs.files}}" | grep ".py$")
+          if [ -z "$py_files" ]; then
+            echo "No Python files to lint."
+          else
+            flake8 $py_files
+            pylint $py_files --rcfile=config/pylintrc
+            bandit -r $py_files
+          fi
+
+      - name: Run nbqa on Jupyter Notebook files
+        run: |
+          nb_files=$(echo "${{ steps.get_file_changes.outputs.files}}" | grep ".nb$")
+          if [ -z "$nb_files" ]; then
+            echo "No Jupyter Notebooks to lint."
+          else
+            nbqa flake8 $py_files
+            nbqa pylint $py_files --rcfile=config/pylintrc
+            nbqa bandit -r $py_files
+          fi
