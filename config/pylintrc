@@ -16,11 +16,3 @@ disable=E0401, C0114
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
 enable=c-extension-no-member
-
-
-[DOCSTRING]
-
-default-docstring-type=google
-# List of exceptions that do not need to be mentioned in the Raises section of
-# a docstring.
-ignore-exceptions=AssertionError,NotImplementedError,StopIteration,TypeError
