@@ -55,7 +55,7 @@ jobs:
 
       - name: Run nbqa on Jupyter Notebook files
         run: |
-          nb_files="$(echo ${{ steps.get_file_changes.outputs.files }} | grep '.ipynb$')"
+          nb_files=$(grep -E '\.ipynb$' changed_files.txt || true)
           if [ -n "$nb_files" ]; then
             # nbqa flake8 $nb_files
             nbqa pylint $nb_files --rcfile=config/pylintrc
