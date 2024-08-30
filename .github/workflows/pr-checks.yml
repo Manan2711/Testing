@@ -42,7 +42,7 @@ jobs:
       
       - name: Run pylint on Python files
         run: |
-          py_files="$(echo "${{ steps.get_file_changes.outputs.files}}" | grep ".py$")"
+          py_files="$(echo ${{ steps.get_file_changes.outputs.files }} | grep '.py$')"
           if [ -n "$py_files" ]; then
             # flake8 $py_files
             pylint $py_files --rcfile=config/pylintrc
@@ -53,7 +53,7 @@ jobs:
 
       - name: Run nbqa on Jupyter Notebook files
         run: |
-          nb_files="$(echo "${{ steps.get_file_changes.outputs.files}}" | grep ".ipynb$")"
+          nb_files="$(echo ${{ steps.get_file_changes.outputs.files }} | grep '.ipynb$')"
           if [ -n "$nb_files" ]; then
             # nbqa flake8 $nb_files
             nbqa pylint $nb_files --rcfile=config/pylintrc
