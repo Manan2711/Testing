@@ -41,18 +41,19 @@ jobs:
           pip install nbqa flake8 pylint bandit nbformat
       
       # Step 1: Check Naming Conventions and Linting
-      - name: Check Naming Conventions and Linting IPYNB files
+      - name: Check Naming Conventions and Linting
         run: |
-          echo "${{ steps.get_file_changes.outputs.files }}" | tr " " "\n" | if grep -q ".ipynb"; then
-            xargs nbqa flake8
-            xargs nbqa pylint . --rcfile=config/pylintrc
-            xargs nbqa bandit
-          fi
-      
-      - name: Check Naming Conventions and Linting Python files
+          # Check .ipynb files for naming conventions and linting issues using nbqa
+          nbqa flake8 .
+          nbqa pylint . --rcfile=config/pylintrc
+
+          # Check .py files for naming conventions and linting issues directly
+          flake8 .
+          pylint . --rcfile=config/pylintrc
+
+      # Step 4: Security Vulnerability Check
+      - name: Security Vulnerability Check
         run: |
-          echo "${{ steps.get_file_changes.outputs.files }}" | tr " " "\n" | if grep -q ".py"; then
-            xargs flake8
-            xargs pylint . --rcfile=config/pylintrc
-            xargs bandit
-          fi
+          # Use bandit to check for security vulnerabilities in .ipynb and .py files
+          nbqa bandit -r .
+          bandit -r .
