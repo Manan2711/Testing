@@ -60,6 +60,8 @@ jobs:
       - name: Run nbqa on Jupyter Notebook files
         run: |
           nb_files=$(grep -E '\.ipynb$' changed_files.txt || true)
+          echo "Jupyter Notebook files to lint: $(grep -e '.ipynb$' changed_files.txt)"
+          echo "Jupyter Notebook files to: $(cat changed_files.txt)"
           echo "Jupyter Notebook files to lint: $nb_files"
           if [ -n "$nb_files" ]; then
             nbqa flake8 $nb_files
