@@ -9,9 +9,6 @@ jobs:
   build:
     name: Pull Request Checks
     runs-on: ubuntu-latest
-    env:
-      py_files: ''
-      nb_files: ''
     
     steps:
       - name: Checkout Code
@@ -46,7 +43,7 @@ jobs:
       
       - name: Run pylint on Python files
         run: |
-          py_files="$(echo ${{ steps.get_file_changes.outputs.files }} | grep '.py$')"
+          py_files="$(echo $steps.get_file_changes.outputs.files | grep '.py$')"
           if [ -n "$py_files" ]; then
             # flake8 $py_files
             pylint $py_files --rcfile=config/pylintrc
