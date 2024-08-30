@@ -29,11 +29,11 @@ jobs:
         run: |
           # Check .ipynb files for naming conventions and linting issues using nbqa
           nbqa flake8 .
-          nbqa pylint .
+          nbqa pylint . --rcfile=config/pylintrc
 
           # Check .py files for naming conventions and linting issues directly
           flake8 .
-          pylint .
+          pylint . --rcfile=config/pylintrc
 
       # Step 4: Security Vulnerability Check
       - name: Security Vulnerability Check
