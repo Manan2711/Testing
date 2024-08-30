@@ -1,5 +1,4 @@
-name: Code Quality and Security Checks
-
+name: Pull Request Checks
 on:
   pull_request:
     branches:
@@ -14,37 +13,37 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Get file changes
-        id: get_file_changes
+      - name: Get changed files
+        id: changed_files
         uses: trilom/file-changes-action@v1.2.3
         with:
           output: ' '
 
-      - name: Report list of changed files
+      - name: Save and print changed files
         run: |
-          echo "${{ steps.get_file_changes.outputs.files }}" > changed_files.txt
-          echo Changed files: ${{ steps.get_file_changes.outputs.files }}
+          echo "${{ steps.changed_files.outputs.files }}" > changed_files.txt
+          echo Changed files: ${{ steps.changed_files.outputs.files }}
 
-      - name: Check for docx files
+      - name: Check for PDF and Word files
         run: |
-          echo "${{ steps.get_file_changes.outputs.files }}" | tr " " "\n" | if grep -q -e ".docx" -e ".pdf"; then
-            echo "This PR contains PDF or Docx files, please remove them and try again."
+          echo "${{ steps.changed_files.outputs.files }}" | tr " " "\n" | if grep -q -e ".docx" -e ".pdf"; then
+            echo "This PR contains PDF or word (.docx) files, please remove them and try again."
             exit 1
           else
-            echo "PR does not contain PDF or Docx files."
+            echo "This PR does not contain PDF or word (.docx) files."
           fi
 
-      - name: Install Python
+      - name: Setup Python 3.9
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
-      - name: Install Dependencies
+      - name: Install check dependencies
         run: |
           python -m pip install --upgrade pip
           pip install nbqa flake8 pylint bandit nbformat
 
-      - name: Run pylint on Python files
+      - name: Execute linting and security check on Python files
         run: |
           py_files=$(grep -E '\.py$' changed_files.txt || true)
           if [ -n "$py_files" ]; then
@@ -52,10 +51,10 @@ jobs:
             pylint $py_files --rcfile=config/pylintrc
             bandit -r $py_files
           else
-            echo "No Python files to lint."
+            echo "No Python files to lint and check."
           fi
 
-      - name: Run nbqa on Jupyter Notebook files
+      - name: Execute linting and security check on Jupyter Notebooks
         run: |
           nb_files=$(grep -E '\.ipynb$' changed_files.txt || true)
           if [ -n "$nb_files" ]; then
