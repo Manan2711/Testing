@@ -9,6 +9,10 @@ jobs:
   build:
     name: Pull Request Checks
     runs-on: ubuntu-latest
+    env:
+      py_files: ''
+      nb_files: ''
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
