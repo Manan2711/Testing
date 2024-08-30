@@ -1,0 +1,60 @@
+name: Code Quality and Security Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Pull Request Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get file changes
+        id: get_file_changes
+        uses: trilom/file-changes-action@v1
+        with:
+          output: ' '
+
+      - name: Report list of changed files
+        run: |
+          echo Changed files: ${{ steps.get_file_changes.outputs.files }}
+
+      - name: Check for docx files
+        run: |
+          echo "${{ steps.get_file_changes.outputs.files }}" | tr " " "\n" | if grep -q -e ".docx" -e ".pdf"; then
+            echo "This PR contains PDF or Docx files, please remove them and try again."
+            exit 1
+          else
+            echo "PR does not contain PDF or Docx files."
+          fi
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install nbqa flake8 pylint bandit nbformat
+      
+      # Step 1: Check Naming Conventions and Linting
+      - name: Check Naming Conventions and Linting IPYNB files
+        run: |
+          echo "${{ steps.get_file_changes.outputs.files }}" | tr " " "\n" | if grep -q ".ipynb"; then
+            xargs nbqa flake8
+            xargs nbqa pylint . --rcfile=config/pylintrc
+            xargs nbqa bandit
+          fi
+      
+      - name: Check Naming Conventions and Linting Python files
+        run: |
+          echo "${{ steps.get_file_changes.outputs.files }}" | tr " " "\n" | if grep -q ".py"; then
+            xargs flake8
+            xargs pylint . --rcfile=config/pylintrc
+            xargs bandit
+          fi
