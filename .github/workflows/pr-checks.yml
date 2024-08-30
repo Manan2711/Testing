@@ -20,6 +20,7 @@ jobs:
 
       - name: Report list of changed files
         run: |
+          echo "${{ steps.get_file_changes.outputs.files }}" > changed_files.txt
           echo Changed files: ${{ steps.get_file_changes.outputs.files }}
 
       - name: Check for docx files
@@ -43,8 +44,7 @@ jobs:
       
       - name: Run pylint on Python files
         run: |
-          # py_files="$(echo $steps.get_file_changes.outputs.files | grep '.py$')"
-          py_files=""
+          py_files=$(grep -E '\.py$' changed_files.txt || true)
           if [ -n "$py_files" ]; then
             # flake8 $py_files
             pylint $py_files --rcfile=config/pylintrc
