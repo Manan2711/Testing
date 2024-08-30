@@ -46,9 +46,9 @@ jobs:
         run: |
           py_files=$(grep -E '\.py$' changed_files.txt || true)
           if [ -n "$py_files" ]; then
-            # flake8 $py_files
+            flake8 $py_files
             pylint $py_files --rcfile=config/pylintrc
-            # bandit -r $py_files
+            bandit -r $py_files
           else
             echo "No Python files to lint."
           fi
@@ -57,9 +57,9 @@ jobs:
         run: |
           nb_files=$(grep -E '\.ipynb$' changed_files.txt || true)
           if [ -n "$nb_files" ]; then
-            # nbqa flake8 $nb_files
+            nbqa flake8 $nb_files
             nbqa pylint $nb_files --rcfile=config/pylintrc
-            # nbqa bandit -r $nb_files
+            nbqa bandit -r $nb_files
           else
             echo "No Jupyter Notebooks to lint."
           fi
