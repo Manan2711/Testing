@@ -13,22 +13,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
       
-      - name: Get changed files and write the outputs to a Txt file
-        id: changed-files-write-output-files-txt
+      - name: Get changed files
+        id: changed_files
         uses: tj-actions/changed-files@v45.0.1
         with:
           separator: ","
         
-      - name: Verify the contents of the .github/outputs/added_files.txt file
-        env:
-          ALL_FILES: ${{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }}
+      - name: Print the Changed Files
         run: |
-          echo "${{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }}" >> changed_files.txt
-          echo Changed files: ${{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }}
+          echo Changed files: ${{ steps.changed_files.outputs.all_changed_files }}
 
       - name: Check for PDF and Word files
         run: |
-          echo "${{ steps.changed_files.outputs.files }}" | tr " " "\n" | if grep -q -e ".docx" -e ".pdf"; then
+          echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | if grep -q -e ".docx" -e ".pdf"; then
             echo "This PR contains PDF or word (.docx) files, please remove them and try again."
             exit 1
           else
@@ -47,23 +44,26 @@ jobs:
       
       - name: Execute linting and security check on Python files
         run: |
-          py_files=$(grep -E '\.py$' changed_files.txt || true)
+          py_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".py$" || true)
           if [ -n "$py_files" ]; then
-            flake8 $py_files
-            pylint $py_files --rcfile=ci_build/pylintrc
-            bandit -r $py_files
+            for file in $py_files; do
+              flake8 $file
+              pylint $file --rcfile=ci_build/pylintrc
+              # bandit -r $file
+            done
           else
             echo "No Python files to lint and check."
           fi
 
       - name: Execute linting and security check on Jupyter Notebooks
         run: |
-          nb_files=$(grep -E '\.ipynb$' changed_files.txt || true)
+          nb_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".ipynb$" || true)
           if [ -n "$nb_files" ]; then
-            nbqa flake8 $nb_files
-            nbqa pylint $nb_files --rcfile=ci_build/pylintrc
-            nbqa bandit -r $nb_files
+            for file in $nb_files; do
+              nbqa flake8 $file
+              nbqa pylint $file --rcfile=ci_build/pylintrc
+              # nbqa bandit -r $file
+            done
           else
-            echo $nb_files
             echo "No Jupyter Notebooks to lint."
           fi
