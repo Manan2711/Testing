@@ -17,18 +17,14 @@ jobs:
         id: changed-files-write-output-files-txt
         uses: tj-actions/changed-files@v45.0.1
         with:
-          write_output_files: true
+          separator: "\n"
         
       - name: Verify the contents of the .github/outputs/added_files.txt file
         env:
           ALL_FILES: ${{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }}
         run: |
-          cat .github/outputs/added_files.txt
-          echo .github/outputs/added_files.txt
           echo "${{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }}" >> changed_files.txt
-          echo ${{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }} 
-          echo $ALL_FILES
-          echo ${ ALL_FILES }
+          echo Changed files: ${{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }}
 
       - name: Check for PDF and Word files
         run: |
