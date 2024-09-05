@@ -25,8 +25,8 @@ jobs:
         run: |
           cat .github/outputs/added_files.txt
           echo .github/outputs/added_files.txt
-          echo ${{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }}
-          echo {{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }} >> changed_files.txt
+          echo "${{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }}" >> changed_files.txt
+          echo ${{ steps.changed-files-write-output-files-txt.outputs.all_changed_files }} 
           echo $ALL_FILES
           echo ${ ALL_FILES }
 
