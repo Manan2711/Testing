@@ -39,6 +39,7 @@ jobs:
           while IFS= read -r file; do
             if echo $file | grep -q " "; then
               echo "The file or path $file contains spaces, please rename the path or file without spaces, using '_' instead."
+              exit 1
             fi; 
             
             IFS='/' read -r -a fname_array <<< "$file";
@@ -46,6 +47,7 @@ jobs:
         
             if echo "${path}" | grep -qE '[A-Z]'; then
               echo "The path '$file' contains capital letters. Please write file paths in lower case.";
+              exit 1
             fi; 
             
           done <<< "$all_files"
@@ -59,7 +61,7 @@ jobs:
             md_fname=$(echo "$file" | tr "/" "\n" | grep "md")
             if echo $md_fname | grep -qE "^[^A-Z]+.md"; then
                 echo "The markdown file $md_fname at path $file is not in all caps. Please write markdown file names using all caps."
-                exit
+                exit 1
             fi
           done <<< "$md_files"
           echo "All markdown files are correctly named\!"
