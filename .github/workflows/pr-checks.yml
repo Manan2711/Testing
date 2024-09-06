@@ -18,10 +18,32 @@ jobs:
         uses: tj-actions/changed-files@v45.0.1
         with:
           separator: ","
+
+      - name: Get Markdown files
+        id: changed_md_files
+        uses: tj-actions/changed-files@v45.0.1
+        with:
+          files: |
+            *.md
         
       - name: Print the Changed Files
         run: |
           echo Changed files: ${{ steps.changed_files.outputs.all_changed_files }}
+          echo Markdown files: ${{ steps.changed_md_files.outputs.all_changed_files }}
+
+      # - name: Check for file naming conventions
+      #   run: |
+      #     all_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n")
+
+      #     for $file in all_files; do
+      #       if $
+
+          
+      #       echo "This PR contains PDF or word (.docx) files, please remove them and try again."
+      #       exit 1
+      #     else
+      #       echo "This PR does not contain PDF or word (.docx) files."
+      #     fi
 
       - name: Check for PDF and Word files
         run: |
