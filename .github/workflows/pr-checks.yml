@@ -17,6 +17,8 @@ jobs:
         id: changed_files
         uses: tj-actions/changed-files@v45.0.1
         with:
+          files: |
+            !**.md
           separator: ","
 
       - name: Get Markdown files
@@ -24,7 +26,8 @@ jobs:
         uses: tj-actions/changed-files@v45.0.1
         with:
           files: |
-            *.md
+            **.md
+          separator: ","
         
       - name: Print the Changed Files
         run: |
