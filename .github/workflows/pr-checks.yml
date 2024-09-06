@@ -18,7 +18,7 @@ jobs:
         uses: tj-actions/changed-files@v45.0.1
         with:
           files: |
-            !**.md
+            !*.md
           separator: ","
 
       - name: Get Markdown files
