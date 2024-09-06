@@ -19,7 +19,7 @@ jobs:
         with:
           separator: ","
 
-      - name: Get Markdown files
+      - name: Get markdown files
         id: changed_md_files
         uses: tj-actions/changed-files@v45.0.1
         with:
@@ -27,7 +27,7 @@ jobs:
             **.md
           separator: ","
         
-      - name: Print the Changed Files
+      - name: Print the changed and markdown files
         run: |
           echo Changed files: ${{ steps.changed_files.outputs.all_changed_files }}
           echo Markdown files: ${{ steps.changed_md_files.outputs.all_changed_files }}
@@ -38,11 +38,32 @@ jobs:
 
           while IFS= read -r line; do
             if echo $file | grep -q " "; then
-                echo "The file or path $file contains spaces, please use '_', '-' or write without spaces."
-            else
-                echo "Good to go"
+                echo "The file or path $file contains spaces, please use '_' instead of spaces."
+                exit 1
             fi
+
+            fname_array=("${(@s:/:)line}")
+            if echo "${fname_array[@]::${#fname_array[@]}-1}" | grep -E "[A-Z]+"; then
+                echo "File path contains capital letters. Please write file paths in lower case."
+                exit
+            fi
+
           done <<< "$all_files"
+
+          echo "Folders and files are correctly named."
+
+      - name: Check for markdown file naming conventions
+        run: |
+          md_files=$(echo "${{ steps.changed_md_files.outputs.all_changed_files }}" | tr "," "\n")
+          
+          while IFS= read -r line; do
+              md_f=$(echo "$line" | tr "/" "\n" | grep "md")
+              if echo $md_f | grep -qE "^[^A-Z]+.md"; then
+                  echo "The file $md_f with path $line is not in all caps. Please write markdown file names using all caps."
+                  exit 1
+              fi
+          done <<< "$md_files"
+          echo "Done\!"
 
       - name: Check for PDF and Word files
         run: |
