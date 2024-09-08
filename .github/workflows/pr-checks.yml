@@ -52,7 +52,7 @@ jobs:
               echo "The path '$file' contains capital letters. Please write file paths in lower case." >> error_log.txt
             fi
           done <<< "$all_files"
-          echo "All folders and files are correctly named!" >> error_log.txt
+          echo "All folders and files are correctly named!"
 
       - name: Check for markdown file naming conventions
         run: |
@@ -64,15 +64,14 @@ jobs:
               echo "The markdown file $md_fname at path $file is not in all caps. Please write markdown file names using all caps." >> error_log.txt
             fi
           done <<< "$md_files"
-          echo "All markdown files are correctly named!" >> error_log.txt
+          echo "All markdown files are correctly named!"
 
       - name: Check for PDF and Word files
         run: |
-          echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep -q -e ".docx" -e ".pdf"
-          if [ $? -eq 0 ]; then
+          echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | if grep -q -e ".docx" -e ".pdf"; then
             echo "This PR contains PDF or word (.docx) files, please remove them and try again." >> error_log.txt
           else
-            echo "This PR does not contain PDF or word (.docx) files." >> error_log.txt
+            echo "This PR does not contain PDF or word (.docx) files."
           fi
 
       - name: Setup Python 3.9
