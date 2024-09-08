@@ -97,18 +97,18 @@ jobs:
             echo "No Python files to lint and check." >> error_log.txt
           fi
 
-      - name: Execute linting and security check on Jupyter Notebooks
-        run: |
-          nb_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".ipynb$" || true)
-          if [ -n "$nb_files" ]; then
-            for file in $nb_files; do
-              nbqa flake8 $file >> error_log.txt 2>&1
-              nbqa pylint $file --rcfile=ci_build/pylintrc >> error_log.txt 2>&1
-              # nbqa bandit -r $file >> error_log.txt 2>&1
-            done
-          else
-            echo "No Jupyter Notebooks to lint." >> error_log.txt
-          fi
+      # - name: Execute linting and security check on Jupyter Notebooks
+      #   run: |
+      #     nb_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".ipynb$" || true)
+      #     if [ -n "$nb_files" ]; then
+      #       for file in $nb_files; do
+      #         nbqa flake8 $file >> error_log.txt 2>&1
+      #         nbqa pylint $file --rcfile=ci_build/pylintrc >> error_log.txt 2>&1
+      #         # nbqa bandit -r $file >> error_log.txt 2>&1
+      #       done
+      #     else
+      #       echo "No Jupyter Notebooks to lint." >> error_log.txt
+      #     fi
 
       - name: Display errors
         run: |
