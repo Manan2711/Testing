@@ -41,7 +41,7 @@ jobs:
           all_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n")
 
           while IFS= read -r file; do
-            if echo $file | grep -q " "; then
+            if echo "$file" | grep -q " "; then
               echo "The file or path $file contains spaces, please rename the path or file without spaces, using '_' instead." >> error_log.txt
             fi
 
@@ -59,8 +59,8 @@ jobs:
           md_files=$(echo "${{ steps.changed_md_files.outputs.all_changed_files }}" | tr "," "\n")
           
           while IFS= read -r file; do
-            md_fname=$(echo "$file" | tr "/" "\n" | grep "md")
-            if ! echo $md_fname | grep -qE "^[^A-Z]+.md"; then
+            md_fname=$(echo "$file" | tr "/" "\n" | grep "md" || true)  # Ensure grep doesn't exit
+            if ! echo "$md_fname" | grep -qE "^[^A-Z]+.md"; then
               echo "The markdown file $md_fname at path $file is not in all caps. Please write markdown file names using all caps." >> error_log.txt
             fi
           done <<< "$md_files"
@@ -68,7 +68,8 @@ jobs:
 
       - name: Check for PDF and Word files
         run: |
-          echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | if grep -q -e ".docx" -e ".pdf"; then
+          echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep -q -e ".docx" -e ".pdf"
+          if [ $? -eq 0 ]; then
             echo "This PR contains PDF or word (.docx) files, please remove them and try again." >> error_log.txt
           else
             echo "This PR does not contain PDF or word (.docx) files." >> error_log.txt
