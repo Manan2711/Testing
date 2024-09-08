@@ -36,6 +36,7 @@ jobs:
         run: |
           touch error_log.txt
           touch pass_log.txt
+          touch somefile.txt
 
       - name: Check for naming conventions
         run: |
@@ -107,7 +108,7 @@ jobs:
           if [ -n "$nb_files" ]; then
             for file in $nb_files; do
               nbqa flake8 $file
-              nbqa pylint $file --rcfile=ci_build/pylintrc -output-format=txt:somefile.txt
+              nbqa pylint $file --rcfile=ci_build/pylintrc -output=somefile.txt
             done
           else
             echo "No Jupyter Notebooks to lint." >> pass_log.txt
