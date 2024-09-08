@@ -8,7 +8,7 @@ jobs:
   build:
     name: Pull Request Checks
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -26,32 +26,33 @@ jobs:
           files: |
             **.md
           separator: ","
-        
+
       - name: Print the changed and markdown files
         run: |
           echo Changed files: ${{ steps.changed_files.outputs.all_changed_files }}
           echo Markdown files: ${{ steps.changed_md_files.outputs.all_changed_files }}
   
-      - name: Check for file naming conventions
+      - name: Create log file
+        run: |
+          touch error_log.txt
+
+      - name: Check for naming conventions
         run: |
           all_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n")
 
           while IFS= read -r file; do
             if echo $file | grep -q " "; then
-              echo "The file or path $file contains spaces, please rename the path or file without spaces, using '_' instead."
-              exit 1
-            fi; 
-            
+              echo "The file or path $file contains spaces, please rename the path or file without spaces, using '_' instead." >> error_log.txt
+            fi
+
             IFS='/' read -r -a fname_array <<< "$file";
             path="${fname_array[@]::${#fname_array[@]}-1}";
-        
+
             if echo "${path}" | grep -qE '[A-Z]'; then
-              echo "The path '$file' contains capital letters. Please write file paths in lower case.";
-              exit 1
-            fi; 
-            
+              echo "The path '$file' contains capital letters. Please write file paths in lower case." >> error_log.txt
+            fi
           done <<< "$all_files"
-          echo "All folders and files are correctly named\!"
+          echo "All folders and files are correctly named!" >> error_log.txt
 
       - name: Check for markdown file naming conventions
         run: |
@@ -59,20 +60,18 @@ jobs:
           
           while IFS= read -r file; do
             md_fname=$(echo "$file" | tr "/" "\n" | grep "md")
-            if echo $md_fname | grep -qE "^[^A-Z]+.md"; then
-                echo "The markdown file $md_fname at path $file is not in all caps. Please write markdown file names using all caps."
-                exit 1
+            if ! echo $md_fname | grep -qE "^[^A-Z]+.md"; then
+              echo "The markdown file $md_fname at path $file is not in all caps. Please write markdown file names using all caps." >> error_log.txt
             fi
           done <<< "$md_files"
-          echo "All markdown files are correctly named\!"
+          echo "All markdown files are correctly named!" >> error_log.txt
 
       - name: Check for PDF and Word files
         run: |
           echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | if grep -q -e ".docx" -e ".pdf"; then
-            echo "This PR contains PDF or word (.docx) files, please remove them and try again."
-            exit 1
+            echo "This PR contains PDF or word (.docx) files, please remove them and try again." >> error_log.txt
           else
-            echo "This PR does not contain PDF or word (.docx) files."
+            echo "This PR does not contain PDF or word (.docx) files." >> error_log.txt
           fi
 
       - name: Setup Python 3.9
@@ -84,18 +83,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install nbqa flake8 pylint bandit nbformat
-      
+
       - name: Execute linting and security check on Python files
         run: |
           py_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".py$" || true)
           if [ -n "$py_files" ]; then
             for file in $py_files; do
-              flake8 $file
-              pylint $file --rcfile=ci_build/pylintrc
-              # bandit -r $file
+              flake8 $file >> error_log.txt 2>&1
+              pylint $file --rcfile=ci_build/pylintrc >> error_log.txt 2>&1
+              # bandit -r $file >> error_log.txt 2>&1
             done
           else
-            echo "No Python files to lint and check."
+            echo "No Python files to lint and check." >> error_log.txt
           fi
 
       - name: Execute linting and security check on Jupyter Notebooks
@@ -103,10 +102,20 @@ jobs:
           nb_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".ipynb$" || true)
           if [ -n "$nb_files" ]; then
             for file in $nb_files; do
-              nbqa flake8 $file
-              nbqa pylint $file --rcfile=ci_build/pylintrc
-              # nbqa bandit -r $file
+              nbqa flake8 $file >> error_log.txt 2>&1
+              nbqa pylint $file --rcfile=ci_build/pylintrc >> error_log.txt 2>&1
+              # nbqa bandit -r $file >> error_log.txt 2>&1
             done
           else
-            echo "No Jupyter Notebooks to lint."
+            echo "No Jupyter Notebooks to lint." >> error_log.txt
+          fi
+
+      - name: Display errors
+        run: |
+          if [ -s error_log.txt ]; then
+            echo "There were errors found:"
+            cat error_log.txt
+            exit 1
+          else
+            echo "No errors found!"
           fi
