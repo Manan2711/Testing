@@ -113,13 +113,13 @@ jobs:
             echo "No Jupyter Notebooks to lint." >> pass_log.txt
           fi
 
-      - name: Display errors or pass
+      - name: Display logs and handle errors
         run: |
           if [ -s error_log.txt ]; then
-            echo "There were errors found:"
+            echo "Errors found:"
             cat error_log.txt
             exit 1
           else
             cat pass_log.txt
-            # echo "No errors found!"
+            echo "No errors found!"
           fi
