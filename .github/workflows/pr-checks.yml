@@ -36,7 +36,6 @@ jobs:
         run: |
           touch error_log.txt
           touch pass_log.txt
-          touch somefile.txt
 
       - name: Check for naming conventions
         run: |
@@ -80,6 +79,17 @@ jobs:
             echo "This PR does not contain PDF or word (.docx) files." >> pass_log.txt
           fi
 
+      - name: Display name check logs and handle errors
+        run: |
+          if [ -s error_log.txt ]; then
+            echo "Errors found:"
+            cat error_log.txt
+            exit 1
+          else
+            cat pass_log.txt
+            echo "No naming errors found!"
+          fi
+
       - name: Setup Python 3.9
         uses: actions/setup-python@v5
         with:
@@ -89,7 +99,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install nbqa flake8 pylint bandit nbformat
-    
+
       - name: Execute linting and security check on Python files
         run: |
           py_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".py$" || true)
@@ -99,7 +109,7 @@ jobs:
               pylint $file --rcfile=ci_build/pylintrc
             done
           else
-            echo "No Python files to lint and check." >> pass_log.txt
+            echo "No Python files to lint and check."
           fi
 
       - name: Execute linting and security check on Jupyter Notebooks
@@ -108,20 +118,8 @@ jobs:
           if [ -n "$nb_files" ]; then
             for file in $nb_files; do
               nbqa flake8 $file
-              nbqa pylint $file --rcfile=ci_build/pylintrc -output=somefile.txt
+              nbqa pylint $file --rcfile=ci_build/pylintrc
             done
           else
-            echo "No Jupyter Notebooks to lint." >> pass_log.txt
-          fi
-
-      - name: Display logs and handle errors
-        run: |
-          cat somefile.txt
-          if [ -s error_log.txt ]; then
-            echo "Errors found:"
-            cat error_log.txt
-            exit 1
-          else
-            cat pass_log.txt
-            echo "No errors found!"
+            echo "No Jupyter Notebooks to lint."
           fi
