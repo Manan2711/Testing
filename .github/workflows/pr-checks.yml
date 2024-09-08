@@ -44,8 +44,6 @@ jobs:
           while IFS= read -r file; do
             if echo "$file" | grep -q " "; then
               echo "The file or path $file contains spaces, please rename the path or file without spaces, using underscore ('_') instead." >> error_log.txt
-            else
-              echo "Folders and files don't have spaces." >> pass_log.txt
             fi
 
             IFS='/' read -r -a fname_array <<< "$file";
@@ -53,23 +51,25 @@ jobs:
 
             if echo "${path}" | grep -qE '[A-Z]'; then
               echo "The path '$file' contains capital letters. Please write file paths in lower case." >> error_log.txt
-            else
-              echo "All folders and files are correctly named!" >> pass_log.txt
             fi
           done <<< "$all_files"
+          echo "Folders and files are correctly named!" >> pass_log.txt
     
       - name: Check for markdown file naming conventions
         run: |
           md_files=$(echo "${{ steps.changed_md_files.outputs.all_changed_files }}" | tr "," "\n")
-          
-          while IFS= read -r file; do
-            md_fname=$(echo "$file" | tr "/" "\n" | grep "md" || true)  # Ensure grep doesn't exit
-            if echo $md_fname | grep -qE "^[^A-Z]+.md"; then
-              echo "The markdown file $md_fname at path $file is not in all caps. Please write markdown file names using all caps." >> error_log.txt
-            else
-              echo "All markdown files are correctly named!" >> pass_log.txt
-            fi
-          done <<< "$md_files"
+
+          if [ -n "$md_files" ]; then
+            while IFS= read -r file; do
+              md_fname=$(echo "$file" | tr "/" "\n" | grep "md" || true)  # Ensure grep doesn't exit
+              if echo $md_fname | grep -qE "^[^A-Z]+.md"; then
+                echo "The markdown file $md_fname at path $file is not in all caps. Please write markdown file names using all caps." >> error_log.txt
+              fi
+            done <<< "$md_files"
+            echo "All markdown files are correctly named!" >> pass_log.txt
+          else
+            echo "There are no Markdown files to check" >> pass_log.txt
+          fi
 
       - name: Check for PDF and Word files
         run: |
@@ -88,7 +88,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install nbqa flake8 pylint bandit nbformat
-
+    
       - name: Execute linting and security check on Python files
         run: |
           py_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".py$" || true)
@@ -107,7 +107,7 @@ jobs:
           if [ -n "$nb_files" ]; then
             for file in $nb_files; do
               nbqa flake8 $file
-              nbqa pylint $file --rcfile=ci_build/pylintrc
+              nbqa pylint $file --rcfile=ci_build/pylintrc -output-format=txt:somefile.txt
             done
           else
             echo "No Jupyter Notebooks to lint." >> pass_log.txt
@@ -115,6 +115,7 @@ jobs:
 
       - name: Display logs and handle errors
         run: |
+          cat somefile.txt
           if [ -s error_log.txt ]; then
             echo "Errors found:"
             cat error_log.txt
