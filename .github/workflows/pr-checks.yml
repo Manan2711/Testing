@@ -56,7 +56,7 @@ jobs:
               echo "The path '$file' contains capital letters. Please write file paths in lower case." >> error_log.txt
             fi
           done <<< "$all_files"
-          echo -e "====================\n"
+          echo -e "====================\n"  >> error_log.txt
           echo "Folders and files are correctly named!" >> pass_log.txt
     
       - name: Check for markdown file naming conventions
@@ -70,7 +70,7 @@ jobs:
                 echo "The markdown file $md_fname at path $file is not in all caps. Please write markdown file names using all caps." >> error_log.txt
               fi
             done <<< "$md_files"
-            echo -e "====================\n"
+            echo -e "====================\n"  >> error_log.txt
             echo "All markdown files are correctly named!" >> pass_log.txt
           else
             echo "There are no markdown files to check." >> pass_log.txt
@@ -80,7 +80,7 @@ jobs:
         run: |
           echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | if grep -q -e ".docx" -e ".pdf"; then
             echo "This PR contains PDF or word (.docx) files, please remove them and try again." >> error_log.txt
-            echo -e "====================\n"
+            echo -e "====================\n"  >> error_log.txt
           else
             echo "This PR does not contain PDF or word (.docx) files." >> pass_log.txt
           fi
@@ -121,13 +121,13 @@ jobs:
 
       - name: Display name check logs and handle errors
         run: |
-          echo "Naming Conventions Check File:"
+          echo -e "\n===================\nNaming Conventions Check File:"
           cat error_log.txt
           
-          echo "Flake8 Linting Check File:"
+          echo -e "\n===================\nFlake8 Linting Check File:"
           cat flake8_log.txt
           
-          echo "Pylint Linting Check File:"
+          echo -e "\n===================\nPylint Linting Check File:"
           cat pylint_log.txt
           
           if [ -s error_log.txt ]; then
