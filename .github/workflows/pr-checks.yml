@@ -97,7 +97,7 @@ jobs:
           py_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".py$" || true)
           if [ -n "$py_files" ]; then
             for file in $py_files; do
-              flake8 --config=ci_build/flake8.ini "$file" >> flake8_log.txt || true
+              flake8 --config=ci_build/flake8 "$file" >> flake8_log.txt || true
               pylint "$file" --rcfile=ci_build/pylintrc >> pylint_log.txt || true
             done
           else
@@ -109,7 +109,7 @@ jobs:
           nb_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".ipynb$" || true)
           if [ -n "$nb_files" ]; then
             for file in $nb_files; do
-              nbqa flake8 --config=ci_build/flake8.ini "$file" >> flake8_log.txt || true
+              nbqa flake8 --config=ci_build/flake8 "$file" >> flake8_log.txt || true
               nbqa pylint "$file" --rcfile=ci_build/pylintrc >> pylint_log.txt || true
             done
           else
