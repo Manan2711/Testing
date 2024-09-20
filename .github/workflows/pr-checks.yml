@@ -56,7 +56,6 @@ jobs:
               echo "The path '$file' contains capital letters. Please write file paths in lower case." >> error_log.txt
             fi
           done <<< "$all_files"
-          echo -e "-----------------------------------------=\n"  >> error_log.txt
           echo "Folders and files are correctly named!" >> pass_log.txt
     
       - name: Check for markdown file naming conventions
@@ -70,7 +69,6 @@ jobs:
                 echo "The markdown file $md_fname at path $file is not in all caps. Please write markdown file names using all caps." >> error_log.txt
               fi
             done <<< "$md_files"
-            echo -e "-----------------------------------------=\n"  >> error_log.txt
             echo "All markdown files are correctly named!" >> pass_log.txt
           else
             echo "There are no markdown files to check." >> pass_log.txt
@@ -80,7 +78,6 @@ jobs:
         run: |
           echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | if grep -q -e ".docx" -e ".pdf"; then
             echo "This PR contains PDF or word (.docx) files, please remove them and try again." >> error_log.txt
-            echo -e "-----------------------------------------=\n"  >> error_log.txt
           else
             echo "This PR does not contain PDF or word (.docx) files." >> pass_log.txt
           fi
@@ -100,7 +97,7 @@ jobs:
           py_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".py$" || true)
           if [ -n "$py_files" ]; then
             for file in $py_files; do
-              flake8 "$file" >> flake8_log.txt || true
+              flake8 --config=ci_build/flake8.ini "$file" >> flake8_log.txt || true
               pylint "$file" --rcfile=ci_build/pylintrc >> pylint_log.txt || true
             done
           else
@@ -112,7 +109,7 @@ jobs:
           nb_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr "," "\n" | grep ".ipynb$" || true)
           if [ -n "$nb_files" ]; then
             for file in $nb_files; do
-              nbqa flake8 "$file" >> flake8_log.txt || true
+              nbqa flake8 --config=ci_build/flake8.ini "$file" >> flake8_log.txt || true
               nbqa pylint "$file" --rcfile=ci_build/pylintrc >> pylint_log.txt || true
             done
           else
