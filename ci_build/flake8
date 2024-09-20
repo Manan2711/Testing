@@ -1,11 +1,10 @@
 [flake8]
 
-# Ignore the following error messages:
 ignore =
-    E203,  # Whitespace before ':'
-    E501,  # Line too long
-    E302,  # Expected 2 blank lines, found 1
-    E305,  # Expected 2 blank lines after class or function definition
-    W503,  # Line break before binary operator
-    W504,  # Line break after binary operator
-    E731,  # Do not assign a lambda expression, use a def
+    E203, 
+    E501, 
+    E302, 
+    E305, 
+    W503, 
+    W504, 
+    E731, 
